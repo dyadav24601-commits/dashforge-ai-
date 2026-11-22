@@ -1,177 +1,162 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DashForge AI — Enterprise Agentic Dashboard Builder</title>
+  <title>DashForge AI</title>
   <script src="https://tailwindcss.com"></script>
-  <script src="https://jsdelivr.net"></script>
-  <script src="https://cloudflare.com"></script>
-  <style>
-    body { background-color: #090d0b; color: #e2e8f0; font-family: system-ui, -apple-system, sans-serif; }
-  </style>
 </head>
-<body class="min-h-screen flex flex-col">
-  <header class="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur px-4 py-3 sticky top-0 z-50">
-    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-lg bg-lime-400 text-black flex items-center justify-center font-bold text-lg">📊</div>
-        <div>
-          <h1 class="font-bold text-lg text-white leading-tight">DashForge <span class="text-lime-400">AI</span></h1>
-          <p class="text-[11px] text-zinc-400">Enterprise Agentic Workspace</p>
-        </div>
+<body class="bg-zinc-950 text-white min-h-screen p-4 font-sans">
+
+  <div class="max-w-5xl mx-auto space-y-4">
+    <!-- Header -->
+    <div class="flex flex-wrap items-center justify-between gap-3 bg-zinc-900 p-4 rounded-xl border border-zinc-800">
+      <div>
+        <h1 class="text-xl font-bold text-indigo-400">DashForge AI</h1>
+        <p class="text-xs text-zinc-400">Enterprise Agentic Workspace</p>
       </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <input id="apiKeyInput" type="password" placeholder="Paste Gemini API Key..." 
-          class="bg-zinc-900 border border-zinc-700 text-xs rounded-lg px-3 py-2 text-white w-44 focus:outline-none focus:border-lime-400" />
-        <select id="modelSelect" class="bg-zinc-900 border border-zinc-700 text-xs rounded-lg px-2.5 py-2 text-lime-300 focus:outline-none">
-          <option value="gemini-2.5-flash">gemini-2.5-flash (Fast)</option>
-          <option value="gemini-2.5-pro">gemini-2.5-pro (Deep)</option>
-          <option value="gemini-2.0-flash">gemini-2.0-flash</option>
-        </select>
-        <span id="statusBadge" class="text-xs px-2.5 py-1.5 rounded-full bg-zinc-800 text-zinc-400 font-medium">● Offline</span>
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <input id="apiKey" type="password" placeholder="Paste Gemini API Key..." class="bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm w-full sm:w-60 outline-none focus:border-indigo-500" />
+        <span id="status" class="text-xs px-2.5 py-1.5 rounded-lg bg-zinc-950 border border-zinc-800 text-red-400">● Offline</span>
       </div>
     </div>
-  </header>
 
-  <main class="max-w-6xl w-full mx-auto flex-1 p-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
-    <section class="lg:col-span-5 flex flex-col bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden">
-      <div class="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
-        <span class="text-xs font-semibold tracking-wider text-zinc-400 uppercase">⚡ Forge Agent Chat</span>
-        <span id="versionBadge" class="text-xs text-lime-400 bg-lime-400/10 px-2 py-0.5 rounded">v1.0 Ready</span>
+    <!-- Controls -->
+    <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <input id="csvFile" type="file" accept=".csv" class="text-xs text-zinc-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-indigo-600 file:text-white cursor-pointer" />
+        <button id="resetBtn" class="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg">Reset</button>
       </div>
-      <div class="p-3 bg-zinc-900/60 border-b border-zinc-800">
-        <label class="flex items-center justify-between gap-2 cursor-pointer text-xs text-zinc-300 hover:text-lime-400">
-          <span>📁 Upload Business CSV Data (Optional)</span>
-          <span id="csvFileName" class="text-lime-400 font-medium truncate max-w-[140px]">No file</span>
-          <input id="csvInput" type="file" accept=".csv" class="hidden" />
-        </label>
-      </div>
-      <div id="chatLog" class="flex-1 p-4 space-y-3 overflow-y-auto max-h-[360px] text-sm">
-        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-zinc-300">
-          👋 Enter your <b>Gemini API Key</b> above, optionally upload a CSV file, and describe any dashboard you want to build!
-        </div>
-      </div>
-      <div id="errorBanner" class="hidden mx-3 mb-2 p-3 rounded-xl bg-red-950/60 border border-red-500/40 text-xs text-red-200">
-        <p id="errorText" class="mb-2 font-mono break-words"></p>
-        <button onclick="autoFixError()" class="bg-red-500 hover:bg-red-600 text-white font-semibold px-3 py-1.5 rounded-lg">
-          🛠️ Auto-Fix Error with AI
-        </button>
-      </div>
-      <div class="p-3 border-t border-zinc-800 bg-zinc-900/40">
-        <textarea id="promptInput" rows="2" placeholder="Describe or refine dashboard (e.g., Sales analytics with revenue chart & KPIs)..."
-          class="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-lime-400 resize-none"></textarea>
-        <div class="flex justify-between items-center mt-2">
-          <button onclick="clearWorkspace()" class="text-xs text-zinc-500 hover:text-zinc-300">Reset</button>
-          <button id="generateBtn" onclick="generateDashboard()" 
-            class="bg-lime-400 hover:bg-lime-300 text-black font-bold text-sm px-4 py-2 rounded-xl transition">
-            Generate / Refine ↵
-          </button>
-        </div>
-      </div>
-    </section>
 
-    <section class="lg:col-span-7 flex flex-col bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden">
-      <div class="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
-        <div class="flex gap-2">
-          <button id="tabPreview" onclick="switchTab('preview')" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-lime-400 text-black">
-            👁️ Live Preview
-          </button>
-          <button id="tabCode" onclick="switchTab('code')" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-zinc-900 text-zinc-300 hover:text-white">
-            &lt;/&gt; Code View
-          </button>
-        </div>
-        <button onclick="downloadReport()" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-1.5 rounded-lg">
-          ⬇ Export HTML
-        </button>
+      <textarea id="prompt" rows="3" placeholder="Describe your dashboard (e.g., Monthly sales dashboard with charts)..." class="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-3 text-sm outline-none focus:border-indigo-500"></textarea>
+
+      <div class="flex flex-wrap gap-2">
+        <button id="genBtn" class="flex-1 bg-indigo-600 hover:bg-indigo-500 py-2 px-4 rounded-lg text-sm font-semibold">Generate / Refine</button>
+        <button id="fixBtn" class="bg-zinc-800 hover:bg-zinc-700 py-2 px-3 rounded-lg text-xs text-amber-300">Auto-Fix</button>
+        <button id="exportBtn" class="bg-zinc-800 hover:bg-zinc-700 py-2 px-3 rounded-lg text-xs">Export HTML</button>
       </div>
-      <div id="previewContainer" class="flex-1 bg-zinc-900/30 min-h-[450px]">
-        <iframe id="previewFrame" class="w-full h-full min-h-[480px] border-0"></iframe>
+
+      <p id="log" class="text-xs text-zinc-400">Paste your API key and describe a dashboard to start.</p>
+    </div>
+
+    <!-- Tabs & Output -->
+    <div class="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+      <div class="flex gap-2 p-2 bg-zinc-950 border-b border-zinc-800">
+        <button id="viewPreview" class="px-3 py-1 rounded text-xs font-semibold bg-indigo-600">Live Preview</button>
+        <button id="viewCode" class="px-3 py-1 rounded text-xs font-semibold bg-zinc-800">Code View</button>
+        <button id="applyBtn" class="hidden px-3 py-1 rounded text-xs font-semibold bg-emerald-600 ml-auto">Apply Code</button>
       </div>
-      <div id="codeContainer" class="hidden flex-1 flex flex-col">
-        <textarea id="codeEditor" class="w-full flex-1 min-h-[450px] bg-zinc-950 text-lime-300 font-mono text-xs p-4 focus:outline-none"></textarea>
-        <div class="p-2 bg-zinc-900 border-t border-zinc-800 flex justify-end">
-          <button onclick="applyManualCode()" class="bg-lime-400 text-black text-xs font-bold px-3 py-1.5 rounded-lg">Apply Edited Code</button>
-        </div>
-      </div>
-    </section>
-  </main>
+      <iframe id="preview" class="w-full h-[500px] bg-white border-0"></iframe>
+      <textarea id="codeBox" class="hidden w-full h-[500px] bg-zinc-950 text-emerald-400 font-mono text-xs p-3 outline-none"></textarea>
+    </div>
+  </div>
 
   <script>
-    let currentCode = "";
-    let csvSummary = "";
-    let lastError = "";
-    let version = 1;
-    const apiKeyInput = document.getElementById("apiKeyInput");
-    const statusBadge = document.getElementById("statusBadge");
+    const apiKey = document.getElementById('apiKey');
+    const status = document.getElementById('status');
+    const csvFile = document.getElementById('csvFile');
+    const prompt = document.getElementById('prompt');
+    const genBtn = document.getElementById('genBtn');
+    const fixBtn = document.getElementById('fixBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const viewPreview = document.getElementById('viewPreview');
+    const viewCode = document.getElementById('viewCode');
+    const applyBtn = document.getElementById('applyBtn');
+    const preview = document.getElementById('preview');
+    const codeBox = document.getElementById('codeBox');
+    const log = document.getElementById('log');
 
-    apiKeyInput.value = localStorage.getItem("df_gemini_key") || "";
-    updateKeyStatus();
-    apiKeyInput.addEventListener("input", () => {
-      localStorage.setItem("df_gemini_key", apiKeyInput.value.trim());
-      updateKeyStatus();
-    });
+    let csvText = '', htmlCode = '';
 
-    function updateKeyStatus() {
-      if (apiKeyInput.value.trim().length > 10) {
-        statusBadge.textContent = "● Gemini Live";
-        statusBadge.className = "text-xs px-2.5 py-1.5 rounded-full bg-lime-400/15 text-lime-400 font-medium";
+    if (localStorage.getItem('df_key')) {
+      apiKey.value = localStorage.getItem('df_key');
+      checkKey(apiKey.value);
+    }
+
+    function checkKey(k) {
+      if (k.trim().length > 20) {
+        status.textContent = '● Online';
+        status.className = 'text-xs px-2.5 py-1.5 rounded-lg bg-zinc-950 border border-zinc-800 text-emerald-400';
+        localStorage.setItem('df_key', k.trim());
       } else {
-        statusBadge.textContent = "● Enter Key";
-        statusBadge.className = "text-xs px-2.5 py-1.5 rounded-full bg-zinc-800 text-zinc-400 font-medium";
+        status.textContent = '● Offline';
+        status.className = 'text-xs px-2.5 py-1.5 rounded-lg bg-zinc-950 border border-zinc-800 text-red-400';
       }
     }
 
-    document.getElementById("csvInput").addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      document.getElementById("csvFileName").textContent = file.name;
-      Papa.parse(file, {
-        header: true,
-        complete: (results) => {
-          const sample = results.data.slice(0, 15);
-          csvSummary = `Uploaded CSV (${file.name}, ${results.data.length} rows). Columns: ${results.meta.fields.join(", ")}. Sample rows: ${JSON.stringify(sample)}`;
-          appendChat("system", `📁 Loaded <b>${file.name}</b> (${results.data.length} rows). Ready to build dashboard from your real data!`);
-        }
-      });
-    });
+    apiKey.oninput = e => checkKey(e.target.value);
 
-    function appendChat(role, html) {
-      const log = document.getElementById("chatLog");
-      const div = document.createElement("div");
-      div.className = role === "user"
-        ? "bg-lime-400 text-black font-medium rounded-xl p-3 ml-6"
-        : "bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-zinc-200 mr-4";
-      div.innerHTML = html;
-      log.appendChild(div);
-      log.scrollTop = log.scrollHeight;
-    }
+    csvFile.onchange = e => {
+      const f = e.target.files[0];
+      if (!f) return;
+      const r = new FileReader();
+      r.onload = ev => { csvText = ev.target.result.slice(0, 12000); log.textContent = 'CSV Loaded: ' + f.name; };
+      r.readAsText(f);
+    };
 
-    async function generateDashboard(fixInstruction = null) {
-      const key = apiKeyInput.value.trim();
-      const model = document.getElementById("modelSelect").value;
-      const promptText = fixInstruction || document.getElementById("promptInput").value.trim();
-      if (!key) { alert("Please paste your Gemini API Key first!"); return; }
-      if (!promptText) return;
-      if (!fixInstruction) {
-        appendChat("user", promptText);
-        document.getElementById("promptInput").value = "";
-      }
-      const btn = document.getElementById("generateBtn");
-      btn.disabled = true;
-      btn.textContent = "Building...";
-      document.getElementById("errorBanner").classList.add("hidden");
+    viewPreview.onclick = () => {
+      preview.classList.remove('hidden'); codeBox.classList.add('hidden'); applyBtn.classList.add('hidden');
+      viewPreview.className = 'px-3 py-1 rounded text-xs font-semibold bg-indigo-600';
+      viewCode.className = 'px-3 py-1 rounded text-xs font-semibold bg-zinc-800';
+    };
 
-      const systemPrompt = `You are DashForge AI, an expert enterprise dashboard builder. Output ONLY valid, complete, self-contained HTML code (with Tailwind CSS CDN and Chart.js CDN) for an interactive dark-mode analytics dashboard. Do NOT wrap output in markdown fences. Include KPI cards, interactive charts, a clean data table, and an AI Executive Insights box. ${csvSummary ? "Use this real user dataset: " + csvSummary : ""} ${currentCode ? "Refine this existing dashboard code according to the user's request while keeping working components intact:\n" + currentCode : ""}`;
+    viewCode.onclick = () => {
+      preview.classList.add('hidden'); codeBox.classList.remove('hidden'); applyBtn.classList.remove('hidden');
+      viewCode.className = 'px-3 py-1 rounded text-xs font-semibold bg-indigo-600';
+      viewPreview.className = 'px-3 py-1 rounded text-xs font-semibold bg-zinc-800';
+    };
+
+    applyBtn.onclick = () => { htmlCode = codeBox.value; preview.srcdoc = htmlCode; viewPreview.click(); };
+
+    resetBtn.onclick = () => {
+      prompt.value = ''; csvText = ''; htmlCode = ''; preview.srcdoc = ''; codeBox.value = '';
+      log.textContent = 'Workspace reset.';
+    };
+
+    exportBtn.onclick = () => {
+      if (!htmlCode) return alert('Generate a dashboard first!');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([htmlCode], { type: 'text/html' }));
+      a.download = 'dashboard.html'; a.click();
+    };
+
+    async function runAI(isFix = false) {
+      const key = apiKey.value.trim();
+      if (!key) return alert('Please paste your Gemini API Key first!');
+      if (!prompt.value.trim() && !isFix) return alert('Please describe your dashboard!');
+
+      genBtn.disabled = true; genBtn.textContent = 'Generating...'; log.textContent = 'AI is building your dashboard...';
+
+      const sys = 'Return ONLY raw single-file HTML starting with <!DOCTYPE html> and ending with </html>. No markdown backticks. Use Tailwind CSS CDN and Chart.js CDN to build a modern dark-themed interactive dashboard with KPI cards and charts.';
+      const msg = isFix ? `Fix errors in this HTML:\n${htmlCode}` :
+        (htmlCode ? `Update this dashboard: ${prompt.value}\nCSV:\n${csvText}\nHTML:\n${htmlCode}` :
+        `Create a dashboard: ${prompt.value}\n${csvText ? 'CSV Data:\n' + csvText : ''}`);
 
       try {
-        const res = await fetch(`https://googleapis.com{model}:generateContent?key=${key}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const res = await fetch(`https://googleapis.com{key}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ role: "user", parts: [{ text: systemPrompt + "\n\nUser Request: " + promptText }] }],
-            generationConfig: { temperature: 0.4, maxOutputTokens: 8192 }
+            systemInstruction: { parts: [{ text: sys }] },
+            contents: [{ parts: [{ text: msg }] }]
           })
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error?.message || "Gemini API request failed");
+        if (!res.ok) throw new Error(data.error?.message || 'API Error');
+        let code = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        code = code.replace(/^```html\s*/i, '').replace(/```\s*$/i, '').trim();
+        htmlCode = code; preview.srcdoc = code; codeBox.value = code; viewPreview.click();
+        log.textContent = '✅ Dashboard Ready!';
+      } catch (e) {
+        log.textContent = '❌ Error: ' + e.message;
+      } finally {
+        genBtn.disabled = false; genBtn.textContent = 'Generate / Refine';
+      }
+    }
+
+    genBtn.onclick = () => runAI(false);
+    fixBtn.onclick = () => htmlCode ? runAI(true) : alert('Nothing to fix yet!');
+  </script>
+</body>
+</html>
