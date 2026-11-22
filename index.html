@@ -3,160 +3,174 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DashForge AI</title>
-  <script src="https://tailwindcss.com"></script>
+  <title>DashForge AI - Enterprise Agentic Workspace</title>
+  <style>
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: #0f172a; color: #f8fafc; margin: 0; padding: 16px; }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 { margin: 0 0 4px; font-size: 1.8rem; color: #38bdf8; }
+    p.sub { margin: 0 0 16px; color: #94a3b8; font-size: 0.95rem; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+    input[type="password"], textarea {
+      width: 100%; background: #0f172a; color: #f8fafc; border: 1px solid #475569;
+      border-radius: 8px; padding: 10px 12px; font-size: 0.95rem;
+    }
+    input[type="password"] { flex: 1; min-width: 200px; }
+    textarea { min-height: 90px; resize: vertical; margin-bottom: 12px; }
+    .status { font-weight: 600; font-size: 0.9rem; padding: 6px 12px; border-radius: 20px; background: #0f172a; }
+    .online { color: #4ade80; }
+    .offline { color: #f87171; }
+    button {
+      background: #2563eb; color: white; border: none; padding: 10px 16px;
+      border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem;
+    }
+    button:hover { background: #1d4ed8; }
+    button.secondary { background: #334155; }
+    button.secondary:hover { background: #475569; }
+    button.danger { background: #dc2626; }
+    #errorBox {
+      display: none; background: #450a0a; border: 1px solid #ef4444; color: #fca5a5;
+      padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 0.9rem;
+    }
+    .tabs { display: flex; gap: 8px; margin-bottom: 10px; }
+    iframe { width: 100%; height: 480px; border: 1px solid #334155; border-radius: 8px; background: #ffffff; }
+    #codeEditor { display: none; min-height: 480px; font-family: monospace; font-size: 0.85rem; }
+  </style>
 </head>
-<body class="bg-zinc-950 text-white min-h-screen p-4 font-sans">
+<body>
+  <div class="container">
+    <h1>DashForge AI</h1>
+    <p class="sub">Enterprise Agentic Workspace</p>
 
-  <div class="max-w-5xl mx-auto space-y-4">
-    <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3 bg-zinc-900 p-4 rounded-xl border border-zinc-800">
-      <div>
-        <h1 class="text-xl font-bold text-indigo-400">DashForge AI</h1>
-        <p class="text-xs text-zinc-400">Enterprise Agentic Workspace</p>
+    <div class="card">
+      <div class="row">
+        <input type="password" id="apiKey" placeholder="Paste Gemini API Key (AIzaSy...)..." oninput="checkKey()" />
+        <span id="statusBadge" class="status offline">● Offline</span>
+        <button class="secondary" onclick="resetAll()">Reset</button>
       </div>
-      <div class="flex items-center gap-2 w-full sm:w-auto">
-        <input id="apiKey" type="password" placeholder="Paste Gemini API Key..." class="bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm w-full sm:w-60 outline-none focus:border-indigo-500" />
-        <span id="status" class="text-xs px-2.5 py-1.5 rounded-lg bg-zinc-950 border border-zinc-800 text-red-400">● Offline</span>
+
+      <textarea id="promptInput" placeholder="Describe your dashboard (e.g., Create a monthly sales dashboard with charts)..."></textarea>
+
+      <div class="row" style="margin-bottom: 0;">
+        <button id="genBtn" onclick="generateDashboard()">Generate / Refine</button>
+        <button class="secondary" onclick="exportHTML()">Export HTML</button>
       </div>
     </div>
 
-    <!-- Controls -->
-    <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 space-y-3">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <input id="csvFile" type="file" accept=".csv" class="text-xs text-zinc-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-indigo-600 file:text-white cursor-pointer" />
-        <button id="resetBtn" class="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg">Reset</button>
+    <div id="errorBox"></div>
+
+    <div class="card">
+      <div class="tabs">
+        <button id="previewTab" onclick="showTab('preview')">Live Preview</button>
+        <button id="codeTab" class="secondary" onclick="showTab('code')">Code View</button>
+        <button class="secondary" onclick="applyEditedCode()">Apply Code</button>
       </div>
-
-      <textarea id="prompt" rows="3" placeholder="Describe your dashboard (e.g., Monthly sales dashboard with charts)..." class="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-3 text-sm outline-none focus:border-indigo-500"></textarea>
-
-      <div class="flex flex-wrap gap-2">
-        <button id="genBtn" class="flex-1 bg-indigo-600 hover:bg-indigo-500 py-2 px-4 rounded-lg text-sm font-semibold">Generate / Refine</button>
-        <button id="fixBtn" class="bg-zinc-800 hover:bg-zinc-700 py-2 px-3 rounded-lg text-xs text-amber-300">Auto-Fix</button>
-        <button id="exportBtn" class="bg-zinc-800 hover:bg-zinc-700 py-2 px-3 rounded-lg text-xs">Export HTML</button>
-      </div>
-
-      <p id="log" class="text-xs text-zinc-400">Paste your API key and describe a dashboard to start.</p>
-    </div>
-
-    <!-- Tabs & Output -->
-    <div class="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
-      <div class="flex gap-2 p-2 bg-zinc-950 border-b border-zinc-800">
-        <button id="viewPreview" class="px-3 py-1 rounded text-xs font-semibold bg-indigo-600">Live Preview</button>
-        <button id="viewCode" class="px-3 py-1 rounded text-xs font-semibold bg-zinc-800">Code View</button>
-        <button id="applyBtn" class="hidden px-3 py-1 rounded text-xs font-semibold bg-emerald-600 ml-auto">Apply Code</button>
-      </div>
-      <iframe id="preview" class="w-full h-[500px] bg-white border-0"></iframe>
-      <textarea id="codeBox" class="hidden w-full h-[500px] bg-zinc-950 text-emerald-400 font-mono text-xs p-3 outline-none"></textarea>
+      <iframe id="previewFrame"></iframe>
+      <textarea id="codeEditor"></textarea>
     </div>
   </div>
 
   <script>
-    const apiKey = document.getElementById('apiKey');
-    const status = document.getElementById('status');
-    const csvFile = document.getElementById('csvFile');
-    const prompt = document.getElementById('prompt');
-    const genBtn = document.getElementById('genBtn');
-    const fixBtn = document.getElementById('fixBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const exportBtn = document.getElementById('exportBtn');
-    const viewPreview = document.getElementById('viewPreview');
-    const viewCode = document.getElementById('viewCode');
-    const applyBtn = document.getElementById('applyBtn');
-    const preview = document.getElementById('preview');
-    const codeBox = document.getElementById('codeBox');
-    const log = document.getElementById('log');
+    let currentCode = "";
 
-    let csvText = '', htmlCode = '';
-
-    if (localStorage.getItem('df_key')) {
-      apiKey.value = localStorage.getItem('df_key');
-      checkKey(apiKey.value);
-    }
-
-    function checkKey(k) {
-      if (k.trim().length > 20) {
-        status.textContent = '● Online';
-        status.className = 'text-xs px-2.5 py-1.5 rounded-lg bg-zinc-950 border border-zinc-800 text-emerald-400';
-        localStorage.setItem('df_key', k.trim());
+    function checkKey() {
+      const key = document.getElementById("apiKey").value.trim();
+      const badge = document.getElementById("statusBadge");
+      if (key.length > 20) {
+        badge.textContent = "● Online";
+        badge.className = "status online";
       } else {
-        status.textContent = '● Offline';
-        status.className = 'text-xs px-2.5 py-1.5 rounded-lg bg-zinc-950 border border-zinc-800 text-red-400';
+        badge.textContent = "● Offline";
+        badge.className = "status offline";
       }
     }
 
-    apiKey.oninput = e => checkKey(e.target.value);
+    function showError(msg) {
+      const box = document.getElementById("errorBox");
+      box.style.display = msg ? "block" : "none";
+      box.textContent = msg ? "❌ " + msg : "";
+    }
 
-    csvFile.onchange = e => {
-      const f = e.target.files[0];
-      if (!f) return;
-      const r = new FileReader();
-      r.onload = ev => { csvText = ev.target.result.slice(0, 12000); log.textContent = 'CSV Loaded: ' + f.name; };
-      r.readAsText(f);
-    };
+    function showTab(tab) {
+      const frame = document.getElementById("previewFrame");
+      const editor = document.getElementById("codeEditor");
+      if (tab === "preview") {
+        frame.style.display = "block";
+        editor.style.display = "none";
+      } else {
+        frame.style.display = "none";
+        editor.style.display = "block";
+        editor.value = currentCode;
+      }
+    }
 
-    viewPreview.onclick = () => {
-      preview.classList.remove('hidden'); codeBox.classList.add('hidden'); applyBtn.classList.add('hidden');
-      viewPreview.className = 'px-3 py-1 rounded text-xs font-semibold bg-indigo-600';
-      viewCode.className = 'px-3 py-1 rounded text-xs font-semibold bg-zinc-800';
-    };
+    function applyEditedCode() {
+      currentCode = document.getElementById("codeEditor").value;
+      document.getElementById("previewFrame").srcdoc = currentCode;
+      showTab("preview");
+    }
 
-    viewCode.onclick = () => {
-      preview.classList.add('hidden'); codeBox.classList.remove('hidden'); applyBtn.classList.remove('hidden');
-      viewCode.className = 'px-3 py-1 rounded text-xs font-semibold bg-indigo-600';
-      viewPreview.className = 'px-3 py-1 rounded text-xs font-semibold bg-zinc-800';
-    };
+    function resetAll() {
+      document.getElementById("promptInput").value = "";
+      currentCode = "";
+      document.getElementById("previewFrame").srcdoc = "";
+      document.getElementById("codeEditor").value = "";
+      showError("");
+    }
 
-    applyBtn.onclick = () => { htmlCode = codeBox.value; preview.srcdoc = htmlCode; viewPreview.click(); };
+    function exportHTML() {
+      if (!currentCode) return alert("पहले डैशबोर्ड Generate करें!");
+      const blob = new Blob([currentCode], { type: "text/html" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "dashboard.html";
+      a.click();
+    }
 
-    resetBtn.onclick = () => {
-      prompt.value = ''; csvText = ''; htmlCode = ''; preview.srcdoc = ''; codeBox.value = '';
-      log.textContent = 'Workspace reset.';
-    };
+    async function generateDashboard() {
+      const apiKey = document.getElementById("apiKey").value.trim();
+      const prompt = document.getElementById("promptInput").value.trim();
+      const btn = document.getElementById("genBtn");
 
-    exportBtn.onclick = () => {
-      if (!htmlCode) return alert('Generate a dashboard first!');
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([htmlCode], { type: 'text/html' }));
-      a.download = 'dashboard.html'; a.click();
-    };
+      if (!apiKey) return showError("कृपया पहले अपनी Gemini API Key पेस्ट करें।");
+      if (!prompt) return showError("कृपया डैशबोर्ड के बारे में कुछ लिखें।");
 
-    async function runAI(isFix = false) {
-      const key = apiKey.value.trim();
-      if (!key) return alert('Please paste your Gemini API Key first!');
-      if (!prompt.value.trim() && !isFix) return alert('Please describe your dashboard!');
+      showError("");
+      btn.disabled = true;
+      btn.textContent = "Generating...";
 
-      genBtn.disabled = true; genBtn.textContent = 'Generating...'; log.textContent = 'AI is building your dashboard...';
-
-      const sys = 'Return ONLY raw single-file HTML starting with <!DOCTYPE html> and ending with </html>. No markdown backticks. Use Tailwind CSS CDN and Chart.js CDN to build a modern dark-themed interactive dashboard with KPI cards and charts.';
-      const msg = isFix ? `Fix errors in this HTML:\n${htmlCode}` :
-        (htmlCode ? `Update this dashboard: ${prompt.value}\nCSV:\n${csvText}\nHTML:\n${htmlCode}` :
-        `Create a dashboard: ${prompt.value}\n${csvText ? 'CSV Data:\n' + csvText : ''}`);
+      const systemPrompt = `You are an expert frontend developer. Create a complete, single-file responsive HTML dashboard with embedded CSS and Chart.js (from https://jsdelivr.net) if charts are needed. Return ONLY raw valid HTML code starting with <!DOCTYPE html>. Do not wrap in markdown backticks. User request: ${prompt}` + (currentCode ? `\n\nExisting HTML to refine:\n${currentCode}` : "");
 
       try {
-        const res = await fetch(`https://googleapis.com{key}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch(`https://googleapis.com{encodeURIComponent(apiKey)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            systemInstruction: { parts: [{ text: sys }] },
-            contents: [{ parts: [{ text: msg }] }]
+            contents: [{ parts: [{ text: systemPrompt }] }]
           })
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error?.message || 'API Error');
-        let code = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        code = code.replace(/^```html\s*/i, '').replace(/```\s*$/i, '').trim();
-        htmlCode = code; preview.srcdoc = code; codeBox.value = code; viewPreview.click();
-        log.textContent = '✅ Dashboard Ready!';
-      } catch (e) {
-        log.textContent = '❌ Error: ' + e.message;
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error?.message || "API Request Failed (" + response.status + ")");
+        }
+
+        let html = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        html = html.replace(/^```html\s*/i, "").replace(/```\s*$/i, "").trim();
+
+        currentCode = html;
+        document.getElementById("previewFrame").srcdoc = currentCode;
+        document.getElementById("codeEditor").value = currentCode;
+        showTab("preview");
+      } catch (err) {
+        showError(err.message + " (इंटरनेट, VPN या API Key की जांच करें)");
       } finally {
-        genBtn.disabled = false; genBtn.textContent = 'Generate / Refine';
+        btn.disabled = false;
+        btn.textContent = "Generate / Refine";
       }
     }
-
-    genBtn.onclick = () => runAI(false);
-    fixBtn.onclick = () => htmlCode ? runAI(true) : alert('Nothing to fix yet!');
   </script>
 </body>
 </html>
