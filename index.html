@@ -3,173 +3,202 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DashForge AI - Enterprise Agentic Workspace</title>
+  <title>DashForge AI - Fast Workspace</title>
   <style>
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: #0f172a; color: #f8fafc; margin: 0; padding: 16px; }
-    .container { max-width: 900px; margin: 0 auto; }
-    h1 { margin: 0 0 4px; font-size: 1.8rem; color: #38bdf8; }
-    p.sub { margin: 0 0 16px; color: #94a3b8; font-size: 0.95rem; }
-    .card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
-    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
-    input[type="password"], textarea {
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: #0f172a; color: #f8fafc; margin: 0; padding: 14px; }
+    .container { max-width: 960px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    h1 { margin: 0; font-size: 1.4rem; color: #38bdf8; }
+    .badge { font-size: 0.8rem; padding: 4px 10px; border-radius: 99px; background: #1e293b; color: #4ade80; border: 1px solid #334155; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    input[type="password"], select, textarea {
       width: 100%; background: #0f172a; color: #f8fafc; border: 1px solid #475569;
       border-radius: 8px; padding: 10px 12px; font-size: 0.95rem;
     }
-    input[type="password"] { flex: 1; min-width: 200px; }
-    textarea { min-height: 90px; resize: vertical; margin-bottom: 12px; }
-    .status { font-weight: 600; font-size: 0.9rem; padding: 6px 12px; border-radius: 20px; background: #0f172a; }
-    .online { color: #4ade80; }
-    .offline { color: #f87171; }
+    .key-box { flex: 2; min-width: 200px; }
+    .model-box { flex: 1; min-width: 170px; }
+    textarea { min-height: 85px; resize: vertical; margin-bottom: 10px; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
     button {
-      background: #2563eb; color: white; border: none; padding: 10px 16px;
-      border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem;
+      background: #2563eb; color: #fff; border: none; border-radius: 8px;
+      padding: 10px 16px; font-weight: 600; cursor: pointer; font-size: 0.92rem;
     }
     button:hover { background: #1d4ed8; }
-    button.secondary { background: #334155; }
-    button.secondary:hover { background: #475569; }
-    button.danger { background: #dc2626; }
-    #errorBox {
-      display: none; background: #450a0a; border: 1px solid #ef4444; color: #fca5a5;
-      padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 0.9rem;
-    }
+    button.sec { background: #334155; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .err { background: #450a0a; border: 1px solid #ef4444; color: #fecaca; padding: 10px; border-radius: 8px; margin-bottom: 12px; display: none; font-size: 0.9rem; }
     .tabs { display: flex; gap: 8px; margin-bottom: 10px; }
-    iframe { width: 100%; height: 480px; border: 1px solid #334155; border-radius: 8px; background: #ffffff; }
-    #codeEditor { display: none; min-height: 480px; font-family: monospace; font-size: 0.85rem; }
+    .tab { flex: 1; background: #334155; text-align: center; }
+    .tab.active { background: #2563eb; }
+    iframe { width: 100%; height: 520px; border: none; border-radius: 8px; background: #ffffff; }
+    pre { background: #0f172a; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 0.82rem; max-height: 520px; margin: 0; display: none; white-space: pre-wrap; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>DashForge AI</h1>
-    <p class="sub">Enterprise Agentic Workspace</p>
+    <div class="header">
+      <h1>DashForge AI</h1>
+      <span class="badge" id="statusBadge">● Ready</span>
+    </div>
 
     <div class="card">
       <div class="row">
-        <input type="password" id="apiKey" placeholder="Paste Gemini API Key (AIzaSy...)..." oninput="checkKey()" />
-        <span id="statusBadge" class="status offline">● Offline</span>
-        <button class="secondary" onclick="resetAll()">Reset</button>
+        <input type="password" id="apiKey" class="key-box" placeholder="Paste API Key (AIza... / gsk_... / sk-...)" oninput="autoSelectModel()" />
+        <select id="modelSelect" class="model-box">
+          <option value="gemini">Gemini 3.8 Flash (Fast)</option>
+          <option value="groq">Groq Llama 3.3 70B (3s)</option>
+          <option value="openai">OpenAI GPT-4o Mini</option>
+        </select>
       </div>
-
-      <textarea id="promptInput" placeholder="Describe your dashboard (e.g., Create a monthly sales dashboard with charts)..."></textarea>
-
-      <div class="row" style="margin-bottom: 0;">
-        <button id="genBtn" onclick="generateDashboard()">Generate / Refine</button>
-        <button class="secondary" onclick="exportHTML()">Export HTML</button>
+      <textarea id="prompt" placeholder="Describe your dashboard or app (e.g., Create an Indian monthly sales dashboard in ₹ with charts)..."></textarea>
+      <div class="btn-row">
+        <button id="genBtn" onclick="generateApp()">Generate / Refine</button>
+        <button class="sec" onclick="exportHTML()">Export HTML</button>
+        <button class="sec" onclick="resetAll()">Reset</button>
       </div>
     </div>
 
-    <div id="errorBox"></div>
+    <div class="err" id="errorBox"></div>
 
     <div class="card">
       <div class="tabs">
-        <button id="previewTab" onclick="showTab('preview')">Live Preview</button>
-        <button id="codeTab" class="secondary" onclick="showTab('code')">Code View</button>
-        <button class="secondary" onclick="applyEditedCode()">Apply Code</button>
+        <button class="tab active" id="tabPreview" onclick="switchTab('preview')">Live Preview</button>
+        <button class="tab" id="tabCode" onclick="switchTab('code')">Code View</button>
       </div>
       <iframe id="previewFrame"></iframe>
-      <textarea id="codeEditor"></textarea>
+      <pre id="codeView"></pre>
     </div>
   </div>
 
   <script>
     let currentCode = "";
+    const keyInput = document.getElementById("apiKey");
+    const modelSelect = document.getElementById("modelSelect");
 
-    function checkKey() {
-      const key = document.getElementById("apiKey").value.trim();
+    window.onload = () => {
+      const savedKey = localStorage.getItem("df_key");
+      const savedModel = localStorage.getItem("df_model");
+      if (savedKey) keyInput.value = savedKey;
+      if (savedModel) modelSelect.value = savedModel;
+    };
+
+    function autoSelectModel() {
+      const k = keyInput.value.trim();
+      if (k.startsWith("AIza")) modelSelect.value = "gemini";
+      else if (k.startsWith("gsk_")) modelSelect.value = "groq";
+      else if (k.startsWith("sk-")) modelSelect.value = "openai";
+      localStorage.setItem("df_key", k);
+      localStorage.setItem("df_model", modelSelect.value);
+    }
+
+    function switchTab(t) {
+      document.getElementById("tabPreview").classList.toggle("active", t === "preview");
+      document.getElementById("tabCode").classList.toggle("active", t === "code");
+      document.getElementById("previewFrame").style.display = t === "preview" ? "block" : "none";
+      document.getElementById("codeView").style.display = t === "code" ? "block" : "none";
+    }
+
+    async function generateApp() {
+      const key = keyInput.value.trim();
+      const userPrompt = document.getElementById("prompt").value.trim();
+      const provider = modelSelect.value;
+      const errBox = document.getElementById("errorBox");
+      const btn = document.getElementById("genBtn");
       const badge = document.getElementById("statusBadge");
-      if (key.length > 20) {
-        badge.textContent = "● Online";
-        badge.className = "status online";
-      } else {
-        badge.textContent = "● Offline";
-        badge.className = "status offline";
+
+      errBox.style.display = "none";
+      if (!key) { showError("कृपया ऊपर अपनी API Key पेस्ट करें।"); return; }
+      if (!userPrompt) { showError("कृपया नीचे लिखें कि आपको क्या बनाना है।"); return; }
+
+      localStorage.setItem("df_key", key);
+      localStorage.setItem("df_model", provider);
+
+      btn.disabled = true;
+      btn.innerText = "Generating...";
+      badge.innerText = "● Building...";
+
+      const sysInstruction = "You are an expert frontend developer. Return ONLY a complete, single-file HTML document using Tailwind CSS CDN and Chart.js CDN. Make it 100% mobile-responsive, modern, interactive, with realistic data. Do NOT include any markdown backticks (```html) or explanations—output raw HTML only.";
+      const finalPrompt = currentCode
+        ? `Update this existing HTML code based on the request: "${userPrompt}".\n\nExisting HTML:\n${currentCode}`
+        : userPrompt;
+
+      try {
+        let htmlOutput = "";
+
+        if (provider === "gemini") {
+          const url = `https://googleapis.com{encodeURIComponent(key)}`;
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: sysInstruction }] },
+              contents: [{ parts: [{ text: finalPrompt }] }]
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
+          htmlOutput = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        } else {
+          const url = provider === "groq"
+            ? "https://groq.com"
+            : "https://openai.com";
+          const modelName = provider === "groq" ? "llama-3.3-70b-versatile" : "gpt-4o-mini";
+          const res = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${key}`
+            },
+            body: JSON.stringify({
+              model: modelName,
+              messages: [
+                { role: "system", content: sysInstruction },
+                { role: "user", content: finalPrompt }
+              ]
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
+          htmlOutput = data.choices?.[0]?.message?.content || "";
+        }
+
+        htmlOutput = htmlOutput.replace(/^```html\s*/i, "").replace(/```$/i, "").trim();
+        currentCode = htmlOutput;
+        document.getElementById("previewFrame").srcdoc = currentCode;
+        document.getElementById("codeView").textContent = currentCode;
+        badge.innerText = "● Live Ready";
+      } catch (e) {
+        showError("Error: " + e.message);
+        badge.innerText = "● Error";
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Generate / Refine";
       }
     }
 
     function showError(msg) {
-      const box = document.getElementById("errorBox");
-      box.style.display = msg ? "block" : "none";
-      box.textContent = msg ? "❌ " + msg : "";
-    }
-
-    function showTab(tab) {
-      const frame = document.getElementById("previewFrame");
-      const editor = document.getElementById("codeEditor");
-      if (tab === "preview") {
-        frame.style.display = "block";
-        editor.style.display = "none";
-      } else {
-        frame.style.display = "none";
-        editor.style.display = "block";
-        editor.value = currentCode;
-      }
-    }
-
-    function applyEditedCode() {
-      currentCode = document.getElementById("codeEditor").value;
-      document.getElementById("previewFrame").srcdoc = currentCode;
-      showTab("preview");
-    }
-
-    function resetAll() {
-      document.getElementById("promptInput").value = "";
-      currentCode = "";
-      document.getElementById("previewFrame").srcdoc = "";
-      document.getElementById("codeEditor").value = "";
-      showError("");
+      const errBox = document.getElementById("errorBox");
+      errBox.innerText = "❌ " + msg;
+      errBox.style.display = "block";
     }
 
     function exportHTML() {
-      if (!currentCode) return alert("पहले डैशबोर्ड Generate करें!");
+      if (!currentCode) { showError("पहले कोई डैशबोर्ड जेनरेट करें।"); return; }
       const blob = new Blob([currentCode], { type: "text/html" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = "dashboard.html";
+      a.download = "dashforge-dashboard.html";
       a.click();
     }
 
-    async function generateDashboard() {
-      const apiKey = document.getElementById("apiKey").value.trim();
-      const prompt = document.getElementById("promptInput").value.trim();
-      const btn = document.getElementById("genBtn");
-
-      if (!apiKey) return showError("कृपया पहले अपनी Gemini API Key पेस्ट करें।");
-      if (!prompt) return showError("कृपया डैशबोर्ड के बारे में कुछ लिखें।");
-
-      showError("");
-      btn.disabled = true;
-      btn.textContent = "Generating...";
-
-      const systemPrompt = `You are an expert frontend developer. Create a complete, single-file responsive HTML dashboard with embedded CSS and Chart.js (from https://jsdelivr.net) if charts are needed. Return ONLY raw valid HTML code starting with <!DOCTYPE html>. Do not wrap in markdown backticks. User request: ${prompt}` + (currentCode ? `\n\nExisting HTML to refine:\n${currentCode}` : "");
-
-      try {
-        const response = await fetch(`https://googleapis.com{encodeURIComponent(apiKey)}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: systemPrompt }] }]
-          })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error?.message || "API Request Failed (" + response.status + ")");
-        }
-
-        let html = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        html = html.replace(/^```html\s*/i, "").replace(/```\s*$/i, "").trim();
-
-        currentCode = html;
-        document.getElementById("previewFrame").srcdoc = currentCode;
-        document.getElementById("codeEditor").value = currentCode;
-        showTab("preview");
-      } catch (err) {
-        showError(err.message + " (इंटरनेट, VPN या API Key की जांच करें)");
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Generate / Refine";
-      }
+    function resetAll() {
+      currentCode = "";
+      document.getElementById("prompt").value = "";
+      document.getElementById("previewFrame").srcdoc = "";
+      document.getElementById("codeView").textContent = "";
+      document.getElementById("errorBox").style.display = "none";
     }
   </script>
 </body>
