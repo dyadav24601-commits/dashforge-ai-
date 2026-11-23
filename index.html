@@ -101,14 +101,15 @@
     }
 
     async function getActiveGeminiModel(key) {
-      const listRes = await fetch(`https://googleapis.com{encodeURIComponent(key)}`);
+      const listRes = await fetch("https://googleapis.com" + encodeURIComponent(key));
       if (!listRes.ok) return "models/gemini-2.5-flash";
       const listData = await listRes.json();
       const models = (listData.models || []).filter(m =>
         (m.supportedGenerationMethods || []).includes("generateContent")
       );
       const flash = models.find(m => m.name.includes("flash") && !m.name.includes("1.5") && !m.name.includes("2.0"));
-      return flash ? flash.name : (models[0] ? models[0].name : "models/gemini-2.5-flash");
+      const chosen = flash || models.at(0);
+      return chosen ? chosen.name : "models/gemini-2.5-flash";
     }
 
     async function generateApp() {
@@ -130,9 +131,9 @@
       btn.innerText = "Generating...";
       badge.innerText = "● Building...";
 
-      const sysInstruction = "You are an expert frontend developer. Return ONLY a complete, single-file HTML document using Tailwind CSS CDN and Chart.js CDN. Make it 100% mobile-responsive, modern, interactive, with realistic data. Do NOT include any markdown backticks (```html) or explanations—output raw HTML only.";
+      const sysInstruction = "You are an expert frontend developer. Return ONLY a complete, single-file HTML document using Tailwind CSS CDN and Chart.js CDN. Make it 100% mobile-responsive, modern, interactive, with realistic data. Do NOT include any markdown backticks or explanations—output raw HTML only.";
       const finalPrompt = currentCode
-        ? `Update this existing HTML code based on the request: "${userPrompt}".\n\nExisting HTML:\n${currentCode}`
+        ? "Update this existing HTML code based on the request: " + userPrompt + "\n\nExisting HTML:\n" + currentCode
         : userPrompt;
 
       try {
@@ -140,7 +141,7 @@
 
         if (provider === "gemini") {
           const modelPath = await getActiveGeminiModel(key);
-          const url = `https://googleapis.com{modelPath}:generateContent?key=${encodeURIComponent(key)}`;
+          const url = "https://googleapis.com" + modelPath + ":generateContent?key=" + encodeURIComponent(key);
           const res = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -150,8 +151,8 @@
             })
           });
           const data = await res.json();
-          if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
-          htmlOutput = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+          if (!res.ok) throw new Error(data.error?.message || "HTTP " + res.status);
+          htmlOutput = data.candidates?.at(0)?.content?.parts?.at(0)?.text || "";
         } else {
           const url = provider === "groq"
             ? "https://groq.com"
@@ -161,7 +162,7 @@
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${key}`
+              "Authorization": "Bearer " + key
             },
             body: JSON.stringify({
               model: modelName,
@@ -172,8 +173,8 @@
             })
           });
           const data = await res.json();
-          if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
-          htmlOutput = data.choices?.[0]?.message?.content || "";
+          if (!res.ok) throw new Error(data.error?.message || "HTTP " + res.status);
+          htmlOutput = data.choices?.at(0)?.message?.content || "";
         }
 
         htmlOutput = htmlOutput.replace(/^```html\s*/i, "").replace(/```$/i, "").trim();
