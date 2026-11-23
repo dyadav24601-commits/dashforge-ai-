@@ -47,7 +47,7 @@
       <div class="row">
         <input type="password" id="apiKey" class="key-box" placeholder="Paste API Key (AIza... / gsk_... / sk-...)" oninput="autoSelectModel()" />
         <select id="modelSelect" class="model-box">
-          <option value="gemini">Gemini 3.8 Flash (Fast)</option>
+          <option value="gemini">Gemini Auto-Flash (Fast)</option>
           <option value="groq">Groq Llama 3.3 70B (3s)</option>
           <option value="openai">OpenAI GPT-4o Mini</option>
         </select>
@@ -100,6 +100,17 @@
       document.getElementById("codeView").style.display = t === "code" ? "block" : "none";
     }
 
+    async function getActiveGeminiModel(key) {
+      const listRes = await fetch(`https://googleapis.com{encodeURIComponent(key)}`);
+      if (!listRes.ok) return "models/gemini-2.5-flash";
+      const listData = await listRes.json();
+      const models = (listData.models || []).filter(m =>
+        (m.supportedGenerationMethods || []).includes("generateContent")
+      );
+      const flash = models.find(m => m.name.includes("flash") && !m.name.includes("1.5") && !m.name.includes("2.0"));
+      return flash ? flash.name : (models[0] ? models[0].name : "models/gemini-2.5-flash");
+    }
+
     async function generateApp() {
       const key = keyInput.value.trim();
       const userPrompt = document.getElementById("prompt").value.trim();
@@ -128,7 +139,8 @@
         let htmlOutput = "";
 
         if (provider === "gemini") {
-          const url = `https://googleapis.com{encodeURIComponent(key)}`;
+          const modelPath = await getActiveGeminiModel(key);
+          const url = `https://googleapis.com{modelPath}:generateContent?key=${encodeURIComponent(key)}`;
           const res = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
